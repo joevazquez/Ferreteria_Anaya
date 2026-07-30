@@ -101,7 +101,7 @@
     display:flex;align-items:center;gap:6px;background:#fbfaf7;
   }
   .uc-count{margin-left:auto;font-size:11px;font-weight:700;color:var(--muted);}
-  .unified-list{max-height:600px;overflow-y:auto;}
+  .unified-list{}
   .uitem{padding:11px 14px;border-bottom:1px solid var(--line);}
   .uitem:last-child{border-bottom:none;}
   .uitem .uclave{font-weight:700;font-size:11.5px;color:var(--muted);}
@@ -114,7 +114,6 @@
   .uitem-more{padding:10px 14px;color:var(--muted);font-size:11.5px;text-align:center;}
   @media (max-width: 980px){
     .unified-grid{grid-template-columns:1fr;}
-    .unified-list{max-height:260px;}
   }
 
   table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:10px;overflow:hidden;
@@ -320,8 +319,8 @@
         <tr>
           <th style="width:110px;">Clave</th>
           <th style="min-width:220px;">Descripción</th>
-          <th class="prov-header-cristal"><span class="dot dot-cristal"></span>Cristal y Lavisa</th>
-          <th class="prov-header-cedis"><span class="dot dot-cedis"></span>CEDIS</th>
+          <th class="prov-header-cristal"><span class="dot dot-cristal"></span>Fandeli Mario</th>
+          <th class="prov-header-cedis"><span class="dot dot-cedis"></span>Issac Cravioto</th>
           <th class="prov-header-ferre"><span class="dot dot-ferre"></span>Ferrecorrecaminos</th>
           <th style="width:40px;"></th>
         </tr>
@@ -337,7 +336,7 @@
   <!-- ===================== CATALOG VIEWS ===================== -->
   <div class="view" id="view-cristal">
     <div class="toolbar">
-      <div class="search-box"><input class="cat-search" data-cat="cristal" type="text" placeholder="Buscar en Cristal y Lavisa por clave o descripción…"></div>
+      <div class="search-box"><input class="cat-search" data-cat="cristal" type="text" placeholder="Buscar en Fandeli Mario por clave o descripción…"></div>
       <div class="upload-zone" id="drop-cristal">
         📄 <span>Subir PDF actualizado de <b>Fandeli Mario</b></span>
         <button class="btn upload small" id="btn-upload-cristal">Elegir PDF</button>
@@ -476,11 +475,11 @@
   // Each PDF from these 3 suppliers keeps the same column template month to month,
   // so the same positional rules extract the right code + price every time.
   const PROV_CONFIG = {
-    cristal: {label:'Cristal y Lavisa', twoColumn:true, splitX:378, yTol:2.5, claveRe:/^\d{3,8}$/, priceIndex:'last', withMarca:false},
-    cedis:   {label:'CEDIS',            twoColumn:false, yTol:2.5, claveRe:/^\d{1,7}$/,  priceIndex:'first', withMarca:true},
+    cristal: {label:'Fandeli Mario', twoColumn:true, splitX:378, yTol:2.5, claveRe:/^\d{3,8}$/, priceIndex:'last', withMarca:false},
+    cedis:   {label:'Issac Cravioto',            twoColumn:false, yTol:2.5, claveRe:/^\d{1,7}$/,  priceIndex:'first', withMarca:true},
     ferre:   {label:'Ferrecorrecaminos',twoColumn:false, yTol:2.5, claveRe:/^[A-Za-z0-9][A-Za-z0-9\-\.\/]*$/, priceIndex:'last', withMarca:false}
   };
-  const PROV_LABEL = {cristal:'Cristal y Lavisa', cedis:'CEDIS', ferre:'Ferrecorrecaminos'};
+  const PROV_LABEL = {cristal:'Fandeli Mario', cedis:'Issac Cravioto', ferre:'Ferrecorrecaminos'};
   const PRICE_RE = /^[\d,]+\.\d{2}$/;
 
   // ---------- Load embedded (default) catalogs ----------
@@ -804,7 +803,7 @@
     a.click();
   });
   document.getElementById('btn-export-csv').addEventListener('click', ()=>{
-    const rows = [['Clave','Descripcion','Cristal_Codigo','Cristal_Precio','CEDIS_Codigo','CEDIS_Precio','Ferre_Codigo','Ferre_Precio']];
+    const rows = [['Clave','Descripcion','FandeliMario_Codigo','FandeliMario_Precio','IssacCravioto_Codigo','IssacCravioto_Precio','Ferre_Codigo','Ferre_Precio']];
     COMP.forEach(i=>{
       rows.push([
         i.clave, i.descripcion,
@@ -900,8 +899,6 @@
   });
 
   // ---------- Unified search: type a clave/descripcion, see all 3 providers at once ----------
-  const UNIFIED_MAX = 12;
-
   function renderUnified(){
     const raw = document.getElementById('search-unified').value;
     const q = norm(raw);
@@ -916,14 +913,14 @@
     grid.style.display = 'grid';
     empty.style.display = 'none';
 
-    // Find the cheapest price among all shown results across the 3 columns, to badge the overall best deal.
+    // Find the cheapest price among ALL matching results across the 3 columns, to badge the overall best deal.
     const perCat = {};
     let globalBest = null;
     ['cristal','cedis','ferre'].forEach(cat=>{
       const results = filterCatalog(cat, raw);
       perCat[cat] = results;
       if(results.length){
-        const min = Math.min(...results.slice(0, UNIFIED_MAX).map(r=>r[2]));
+        const min = Math.min(...results.map(r=>r[2]));
         if(globalBest === null || min < globalBest) globalBest = min;
       }
     });
@@ -938,8 +935,7 @@
         listEl.innerHTML = '<div class="uitem-empty">Sin coincidencias en ' + PROV_LABEL[cat] + '</div>';
         return;
       }
-      const shown = results.slice(0, UNIFIED_MAX);
-      let html = shown.map(row=>{
+      listEl.innerHTML = results.map(row=>{
         const isBest = globalBest !== null && row[2] === globalBest;
         return '<div class="uitem'+(isBest?' best-item':'')+'">' +
           '<div class="uclave">'+escapeHtml(row[0])+(cat==='cedis' && row[3] ? ' · '+escapeHtml(row[3]) : '')+'</div>' +
@@ -948,10 +944,6 @@
           '<button class="btn small accent add-btn" data-cat="'+cat+'" data-clave="'+escapeAttr(row[0])+'">+ Guardar</button></div>' +
         '</div>';
       }).join('');
-      if(results.length > UNIFIED_MAX){
-        html += '<div class="uitem-more">y ' + (results.length - UNIFIED_MAX).toLocaleString('es-MX') + ' resultado(s) más — afina tu búsqueda</div>';
-      }
-      listEl.innerHTML = html;
     });
   }
 
