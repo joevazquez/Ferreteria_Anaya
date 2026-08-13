@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Comparador de Precios — 3 Proveedores</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --ink:#1c2024;
@@ -312,7 +313,7 @@
       <button class="btn" id="btn-import-json">Importar copia</button>
       <input type="file" id="file-import" accept="application/json" style="display:none;">
     </div>
-    <p class="hint">Haz clic sobre cualquier precio o código para editarlo a mano, o sube el PDF de un proveedor en su pestaña para actualizar todos los precios vinculados de un jalón.</p>
+    <p class="hint">Haz clic sobre cualquier precio o código para editarlo a mano, o sube el PDF o Excel de un proveedor en su pestaña para actualizar todos los precios vinculados de un jalón.</p>
 
     <table id="table-comparativa">
       <thead>
@@ -338,11 +339,11 @@
     <div class="toolbar">
       <div class="search-box"><input class="cat-search" data-cat="cristal" type="text" placeholder="Buscar en Fandeli Mario por clave o descripción…"></div>
       <div class="upload-zone" id="drop-cristal">
-        📄 <span>Subir PDF actualizado de <b>Fandeli Mario</b></span>
-        <button class="btn upload small" id="btn-upload-cristal">Elegir PDF</button>
-        <input type="file" id="file-cristal" accept="application/pdf" style="display:none;">
+        📄 <span>Subir PDF o Excel actualizado de <b>Fandeli Mario</b></span>
+        <button class="btn upload small" id="btn-upload-cristal">Elegir archivo</button>
+        <input type="file" id="file-cristal" accept=".pdf,.xlsx,.xls,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none;">
       </div>
-      <div class="upload-progress" id="progress-cristal"><span class="spinner"></span> Leyendo PDF…</div>
+      <div class="upload-progress" id="progress-cristal"><span class="spinner"></span> Leyendo archivo…</div>
     </div>
     <p class="catalog-meta"><span id="meta-cristal"></span><span class="last-update" id="update-cristal" style="display:none;"></span></p>
     <table class="catalog-table">
@@ -355,11 +356,11 @@
     <div class="toolbar">
       <div class="search-box"><input class="cat-search" data-cat="cedis" type="text" placeholder="Buscar en Issac Cravioto por artículo, marca o descripción…"></div>
       <div class="upload-zone" id="drop-cedis">
-        📄 <span>Subir PDF actualizado de <b>Issac Cravioto</b></span>
-        <button class="btn upload small" id="btn-upload-cedis">Elegir PDF</button>
-        <input type="file" id="file-cedis" accept="application/pdf" style="display:none;">
+        📄 <span>Subir PDF o Excel actualizado de <b>Issac Cravioto</b></span>
+        <button class="btn upload small" id="btn-upload-cedis">Elegir archivo</button>
+        <input type="file" id="file-cedis" accept=".pdf,.xlsx,.xls,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none;">
       </div>
-      <div class="upload-progress" id="progress-cedis"><span class="spinner"></span> Leyendo PDF…</div>
+      <div class="upload-progress" id="progress-cedis"><span class="spinner"></span> Leyendo archivo…</div>
     </div>
     <p class="catalog-meta"><span id="meta-cedis"></span><span class="last-update" id="update-cedis" style="display:none;"></span></p>
     <table class="catalog-table">
@@ -372,11 +373,11 @@
     <div class="toolbar">
       <div class="search-box"><input class="cat-search" data-cat="ferre" type="text" placeholder="Buscar en Ferrecorrecaminos por clave o descripción…"></div>
       <div class="upload-zone" id="drop-ferre">
-        📄 <span>Subir PDF actualizado de <b>Ferrecorrecaminos</b></span>
-        <button class="btn upload small" id="btn-upload-ferre">Elegir PDF</button>
-        <input type="file" id="file-ferre" accept="application/pdf" style="display:none;">
+        📄 <span>Subir PDF o Excel actualizado de <b>Ferrecorrecaminos</b></span>
+        <button class="btn upload small" id="btn-upload-ferre">Elegir archivo</button>
+        <input type="file" id="file-ferre" accept=".pdf,.xlsx,.xls,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none;">
       </div>
-      <div class="upload-progress" id="progress-ferre"><span class="spinner"></span> Leyendo PDF…</div>
+      <div class="upload-progress" id="progress-ferre"><span class="spinner"></span> Leyendo archivo…</div>
     </div>
     <p class="catalog-meta"><span id="meta-ferre"></span><span class="last-update" id="update-ferre" style="display:none;"></span></p>
     <table class="catalog-table">
@@ -385,7 +386,7 @@
     </table>
   </div>
 
-  <footer class="credit">Catálogos base cargados de las listas vigentes al 14–20/07/2026 · Sube un PDF nuevo en cualquier pestaña de proveedor para actualizar sus precios</footer>
+  <footer class="credit">Catálogos base cargados de las listas vigentes al 14–20/07/2026 · Sube un PDF o Excel nuevo en cualquier pestaña de proveedor para actualizar sus precios</footer>
 </div>
 
 <!-- Modal: nuevo producto manual -->
@@ -475,9 +476,9 @@
   // Each PDF from these 3 suppliers keeps the same column template month to month,
   // so the same positional rules extract the right code + price every time.
   const PROV_CONFIG = {
-    cristal: {label:'Fandeli Mario', twoColumn:true, splitX:378, yTol:2.5, claveRe:/^\d{3,8}$/, priceIndex:'last', withMarca:false},
+    cristal: {label:'Fandeli Mario', twoColumn:true, splitX:378, yTol:2.5, claveRe:/^\d{3,8}$/, priceIndex:'first', withMarca:false},
     cedis:   {label:'Issac Cravioto',            twoColumn:false, yTol:2.5, claveRe:/^\d{1,7}$/,  priceIndex:'first', withMarca:true},
-    ferre:   {label:'Ferrecorrecaminos',twoColumn:false, yTol:2.5, claveRe:/^[A-Za-z0-9][A-Za-z0-9\-\.\/]*$/, priceIndex:'last', withMarca:false}
+    ferre:   {label:'Ferrecorrecaminos',twoColumn:false, yTol:2.5, claveRe:/^[A-Za-z0-9][A-Za-z0-9\-\.\/]*$/, priceIndex:'first', withMarca:false}
   };
   const PROV_LABEL = {cristal:'Fandeli Mario', cedis:'Issac Cravioto', ferre:'Ferrecorrecaminos'};
   const PRICE_RE = /^[\d,]+\.\d{2}$/;
@@ -580,7 +581,67 @@
     return out;
   }
 
-  // ---------- Persistent storage ----------
+  // Reads an Excel file (.xlsx/.xls) directly — no OCR/positional guessing needed since
+  // the columns are already structured data. Finds the header row by name, then always
+  // takes the LEFTMOST column whose header contains "precio" (same rule as the PDF parser:
+  // Precio Lista for Issac Cravioto, Precio Pza for Fandeli Mario, the only price column
+  // for Ferrecorrecaminos).
+  function normHeader(s){
+    return (s===undefined||s===null) ? '' : String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  }
+  async function parseProviderExcel(file){
+    const buf = await file.arrayBuffer();
+    const wb = window.XLSX.read(buf, {type:'array'});
+    const sheetName = wb.SheetNames[0];
+    const sheet = wb.Sheets[sheetName];
+    const rows = window.XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', raw:true});
+
+    // Find the header row: the first row that has a "clave/codigo/articulo" cell AND a "descripcion" cell.
+    let headerIdx = -1, claveCol=-1, descCol=-1, priceCol=-1, marcaCol=-1;
+    for(let r=0; r<Math.min(rows.length, 15); r++){
+      const row = rows[r];
+      let cCol=-1, dCol=-1;
+      row.forEach((cell, i)=>{
+        const h = normHeader(cell);
+        if(cCol===-1 && /(articulo|codigo|clave)/.test(h)) cCol = i;
+        if(dCol===-1 && /descripcion/.test(h)) dCol = i;
+      });
+      if(cCol!==-1 && dCol!==-1){
+        headerIdx = r; claveCol = cCol; descCol = dCol;
+        row.forEach((cell, i)=>{
+          const h = normHeader(cell);
+          if(priceCol===-1 && /precio/.test(h)) priceCol = i;
+          if(marcaCol===-1 && /(marca|proveedor|nombrecorto)/.test(h)) marcaCol = i;
+        });
+        break;
+      }
+    }
+    if(headerIdx===-1 || priceCol===-1){
+      throw new Error('No se encontraron las columnas de clave/descripción/precio en el Excel');
+    }
+
+    const out = [];
+    const seen = new Set();
+    for(let r=headerIdx+1; r<rows.length; r++){
+      const row = rows[r];
+      if(!row || row.length===0) continue;
+      const claveRaw = row[claveCol];
+      const clave = (claveRaw===undefined||claveRaw===null) ? '' : String(claveRaw).trim();
+      if(!clave || seen.has(clave)) continue;
+      const descripcion = String(row[descCol] || '').trim();
+      if(!descripcion) continue;
+      let precioRaw = row[priceCol];
+      let precio = typeof precioRaw === 'number' ? precioRaw : parseFloat(String(precioRaw||'').replace(/[^0-9.\-]/g,''));
+      if(isNaN(precio)) continue;
+      precio = Math.round(precio*100)/100;
+      const marca = marcaCol!==-1 ? String(row[marcaCol] || '').trim() : '';
+      seen.add(clave);
+      out.push(marcaCol!==-1 ? [clave, descripcion, precio, marca] : [clave, descripcion, precio]);
+    }
+    return out;
+  }
+
+
   // Uses window.storage when available (Claude's artifact preview); falls back to the
   // browser's own localStorage everywhere else (GitHub Pages, Netlify, opening the file
   // directly, etc.) so saved prices and uploaded catalogs work the same in both places.
@@ -1101,17 +1162,35 @@
     document.getElementById('overlay-summary').classList.add('hidden');
   });
 
+  function detectFileKind(file){
+    const name = (file.name || '').toLowerCase();
+    if(name.endsWith('.pdf') || file.type === 'application/pdf') return 'pdf';
+    if(name.endsWith('.xlsx') || name.endsWith('.xls') ||
+       file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+       file.type === 'application/vnd.ms-excel') return 'excel';
+    return null;
+  }
+
   async function handleProviderUpload(providerKey, file){
     if(!file) return;
-    if(!window.pdfjsLib){ toast('No se pudo cargar el lector de PDF (revisa tu conexión a internet)'); return; }
+    const kind = detectFileKind(file);
+    if(!kind){ toast('Ese archivo no es un PDF ni un Excel — sube un .pdf, .xlsx o .xls'); return; }
+    if(kind === 'pdf' && !window.pdfjsLib){ toast('No se pudo cargar el lector de PDF (revisa tu conexión a internet)'); return; }
+    if(kind === 'excel' && !window.XLSX){ toast('No se pudo cargar el lector de Excel (revisa tu conexión a internet)'); return; }
     const progressEl = document.getElementById('progress-'+providerKey);
     progressEl.style.display = 'flex';
     try{
-      const records = await parseProviderPDF(file, providerKey, (p, n)=>{
-        progressEl.querySelector('span:last-child') && (progressEl.lastChild.textContent = ' Leyendo página ' + p + ' de ' + n + '…');
-      });
+      let records;
+      if(kind === 'pdf'){
+        records = await parseProviderPDF(file, providerKey, (p, n)=>{
+          progressEl.querySelector('span:last-child') && (progressEl.lastChild.textContent = ' Leyendo página ' + p + ' de ' + n + '…');
+        });
+      } else {
+        progressEl.querySelector('span:last-child') && (progressEl.lastChild.textContent = ' Leyendo Excel…');
+        records = await parseProviderExcel(file);
+      }
       if(records.length < 20){
-        toast('No pudimos leer bien este PDF — ¿es el formato habitual de ' + PROV_LABEL[providerKey] + '?');
+        toast('No pudimos leer bien este archivo — ¿es el formato habitual de ' + PROV_LABEL[providerKey] + '?');
         progressEl.style.display = 'none';
         return;
       }
@@ -1147,7 +1226,7 @@
       showSummary(providerKey, records.length, changes, missing);
     }catch(err){
       console.error(err);
-      toast('Ocurrió un error leyendo el PDF: ' + (err && err.message ? err.message : 'inténtalo de nuevo'));
+      toast('Ocurrió un error leyendo el archivo: ' + (err && err.message ? err.message : 'inténtalo de nuevo'));
     }finally{
       progressEl.style.display = 'none';
     }
@@ -1167,8 +1246,8 @@
     zone.addEventListener('drop', (e)=>{
       e.preventDefault(); zone.classList.remove('dragover');
       const file = e.dataTransfer.files[0];
-      if(file && file.type === 'application/pdf') handleProviderUpload(key, file);
-      else toast('Suelta un archivo PDF');
+      if(file && detectFileKind(file)) handleProviderUpload(key, file);
+      else toast('Suelta un archivo PDF o Excel');
     });
   });
 
